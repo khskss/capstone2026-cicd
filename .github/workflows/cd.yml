@@ -8,34 +8,40 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+
+    # 💡 사용할 Secrets를 작업(Job) 전체의 환경 변수로 등록합니다.
+    env:
+      DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKER_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
     steps:
       # 소스코드 가져오기
       - name: 소스코드 체크아웃
         uses: actions/checkout@v4
 
-      # Docker Hub 로그인 (Secrets 사용)
+      # Docker Hub 로그인 (env 변수 사용)
       - name: Docker Hub 로그인
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ env.DOCKER_USER }}
+          password: ${{ env.DOCKER_TOKEN }}
 
       # 1. 백엔드 이미지 빌드 (태그 동시 지정)
       - name: Backend Docker Build
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/yj-backend:${{ github.sha }} ./backend
-          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/yj-backend:${{ github.sha }} ${{ secrets.DOCKERHUB_USERNAME }}/yj-backend:latest
+          docker build -t $DOCKER_USER/yj-backend:${{ github.sha }} ./backend
+          docker tag $DOCKER_USER/yj-backend:${{ github.sha }} $DOCKER_USER/yj-backend:latest
 
-      # 2. 프런트엔드 이미지 빌드 (태그 동시 지정) - 이 부분이 누락되어 에러가 났었습니다.
+      # 2. 프런트엔드 이미지 빌드 (태그 동시 지정)
       - name: Frontend Docker Build
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/yj-frontend:${{ github.sha }} ./frontend
-          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/yj-frontend:${{ github.sha }} ${{ secrets.DOCKERHUB_USERNAME }}/yj-frontend:latest
+          docker build -t $DOCKER_USER/yj-frontend:${{ github.sha }} ./frontend
+          docker tag $DOCKER_USER/yj-frontend:${{ github.sha }} $DOCKER_USER/yj-frontend:latest
 
       # 3. Docker Hub에 Push
       - name: Docker Hub Push
         run: |
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/yj-backend:${{ github.sha }}
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/yj-backend:latest
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/yj-frontend:${{ github.sha }}
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/yj-frontend:latest
+          docker push $DOCKER_USER/yj-backend:${{ github.sha }}
+          docker push $DOCKER_USER/yj-backend:latest
+          docker push $DOCKER_USER/yj-frontend:${{ github.sha }}
+          docker push $DOCKER_USER/yj-frontend:latest
